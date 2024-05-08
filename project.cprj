@@ -1,5 +1,0 @@
-<CYANIDEVER=1.0.0>
-
-{
-  [BLOCK(Blocks.Say) LOCATION(0, 0) PARAM1("Hello from Cyanide!")]
-}
