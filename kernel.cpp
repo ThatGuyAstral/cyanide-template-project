@@ -1,17 +1,22 @@
 void kprint(char* str)
 {
+    // video memory address
     static unsigned short* VidMem = (unsigned short*)0xB8000;
+    // the cursor's x and y position
     static unsigned char x = 0, y = 0;
 
     for (int i = 0; str[i] != '\0'; ++i)
     {
+        // check each character
         switch (str[i])
         {
             case '\n':
+                // creates a new line
                 x = 0;
                 y++;
                 break;
             default:
+                // prints each char from `str`
                 VidMem[80 * y + x] = (VidMem[80 * y + x] & 0xFF00) | str[i];
                 x++;
                 break;
@@ -25,6 +30,7 @@ void kprint(char* str)
 
         if (y >= 25)
         {
+            // scrolls up
             for (int y = 1; y < 20; ++y)
             {
                 for (int x = 0; x < 80; ++x)
@@ -42,8 +48,21 @@ void kprint(char* str)
     }
 }
 
+typedef void (*constructor)();
+extern "C" constructor start_ctors;
+extern "C" constructor end_ctors;
+
+extern "C" void callConstructors() 
+{
+  for(constructor* i = &start_ctors; i != &end_ctors; ++i)
+      // invoke each constructor
+    (*i)();
+}
+
+// this is what executes in the `on boot` block
 void kmain(void* multiboot_structure)
 {
     kprint("Hello from Cyanide!");
-    while (1);
+
+    while(true);
 }
