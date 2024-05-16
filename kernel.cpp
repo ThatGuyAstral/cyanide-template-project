@@ -1,10 +1,14 @@
 #include "types.h"
 #include "gdt.h"
+#include "Hardware/interrupts.h"
+#include "Drivers/driver.h"
+#include "Drivers/keyboard.h"
+#include "Drivers/mouse.h"
 
 void kprint(char* str)
 {
     // video memory address
-    static uint16_t* VidMem = (unsigned short*)0xB8000;
+    static uint16_t* VidMem = (uint16_t*)0xB8000;
     // the cursor's x and y position
     static uint8_t x = 0, y = 0;
 
@@ -47,9 +51,66 @@ void kprint(char* str)
                     VidMem[offset + 1] = 0;
                 }
             }
+            x = 0;
         }
     }
 }
+
+void kprintHex(uint8_t key)
+{
+    char* foo = "00";
+    char* hex = "0123456789ABCDEF";
+    foo[0] = hex[(key >> 4) & 0xF];
+    foo[1] = hex[key & 0xF];
+    kprint(foo);
+}
+
+class KprintKeyboardEventHandler : public KeyboardEventHandler
+{
+public:
+    void OnKeyDown(char c)
+    {
+        char* foo = " ";
+        foo[0] = c;
+        printf(foo);
+    }
+};
+
+class MouseToConsole : public MouseEventHandler
+{
+    int8_t x, y;
+public:
+    
+    MouseToConsole()
+    {
+        uint16_t* VidMem = (uint16_t*)0xB8000;
+        x = 40;
+        y = 12;
+        VidMem[80*y+x] = (VidMem[80*y+x] & 0x0F00) << 4
+                            | (VidMem[80*y+x] & 0xF000) >> 4
+                            | (VidMem[80*y+x] & 0x00FF);        
+    }
+    
+    virtual void OnMouseMove(int xoffset, int yoffset)
+    {
+        static uint16_t* VidMem = (uint16_t*)0xB8000;
+        VidMem[80*y+x] = (VidMem[80*y+x] & 0x0F00) << 4
+                            | (VidMem[80*y+x] & 0xF000) >> 4
+                            | (VidMem[80*y+x] & 0x00FF);
+
+        x += xoffset;
+        if(x >= 80) x = 79;
+        if(x < 0) x = 0;
+        y += yoffset;
+        if(y >= 25) y = 24;
+        if(y < 0) y = 0;
+
+        VidMem[80*y+x] = (VidMem[80*y+x] & 0x0F00) << 4
+                            | (VidMem[80*y+x] & 0xF000) >> 4
+                            | (VidMem[80*y+x] & 0x00FF);
+    }
+    
+};
 
 typedef void (*constructor)();
 extern "C" constructor start_ctors;
@@ -62,12 +123,49 @@ extern "C" void callConstructors()
     (*i)();
 }
 
-// this is what executes in the `on boot` block
+void clear()
+{
+    static uint16_t* VidMem = (uint16_t*)0xB8000;
+    for(y = 0; y < 25; y++)
+                for(x = 0; x < 80; x++)
+                    VidMem[80*y+x] = (VidMem[80*y+x] & 0xFF00) | ' ';
+            x = 0;
+            y = 0;
+}
+
 void kmain(void* multiboot_structure)
 {
     GlobalDescriptorTable gdt;
-    
+    InterruptManager interrupts(0x20, &gdt);
+    DriverManager drvmgr;
+
+    kprint("[SYS] Initializing Keyboard\n");
+
+    KprintKeyboardEventHandler kbhandler;
+    KeyboardDriver keyboard(&interrupts, &kbhandler);
+    drvmgr.AddDriver(&keyboard);
+
+    kprint("[SYS] Initializing Mouse\n");
+
+    MouseToConsole mousehandler;
+    MouseDriver mouse(&interrupts, &mousehandler);
+    drvmgr.AddDriver(&mouse);
+
+    kprint("[SYS] [OK] Initialized Input Devices\n");
+
+    kprint("[SYS] Initializing Drivers\n");
+    drvmgr.ActivateAll();
+
+    kprint("[SYS] [OK] Initialized Drivers\n");
+
+    kprint("[SYS] Activating Interrupts");
+    interrupts.Activate();
+
+    kprint("Cyanide has booted successfuly.");
+
+    // this is what executes in the `on boot` block
     kprint("Hello from Cyanide!");
 
+    // basically a forever loop
     while(true);
 }
