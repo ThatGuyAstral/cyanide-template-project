@@ -4,11 +4,11 @@
 void kprint(char* str)
 {
     // video memory address
-    static unsigned short* VidMem = (unsigned short*)0xB8000;
+    static uint16_t* VidMem = (unsigned short*)0xB8000;
     // the cursor's x and y position
-    static unsigned char x = 0, y = 0;
+    static uint8_t x = 0, y = 0;
 
-    for (int i = 0; str[i] != '\0'; ++i)
+    for (int32_t i = 0; str[i] != '\0'; ++i)
     {
         // check each character
         switch (str[i])
