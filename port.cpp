@@ -1,56 +1,83 @@
 #include "port.h"
+using namespace cyanide::common;
+using namespace cyanide::hardware;
 
-template<class port_size>
-Port<port_size>::Port(uint16_t portnumber) {
-	this->portnumber = portnumber;
+Port::Port(uint16_t portnumber)
+{
+    this->portnumber = portnumber;
 }
 
-template<class port_size>
-Port<port_size>::~Port() { }
-
-template<class port_size>
-void Port<port_size>::Write(port_size data) {
-	switch(sizeof(port_size)) {
-		case sizeof(uint8_t):
-            __asm__ volatile("outb %0, %1" : : "a" (data), "Nd" (portnumber));
-            break;
-
-	    case sizeof(uint16_t):
-		    __asm__ volatile("outw %0, %1" : : "a" (data), "Nd" (portnumber));
-		    break;
-
-	    case sizeof(uint32_t):
-		    __asm__ volatile("outl %0, %1" : : "a" (data), "Nd" (portnumber));
-		    break;
-	}
+Port::~Port()
+{
 }
 
-template<class port_size>
-port_size Port<port_size>::Read() {
-	port_size result;
-
-    switch(sizeof(port_size)) {
-		case sizeof(uint8_t):
-            __asm__ volatile("inb %1, %0" : "=a" (result) : "Nd" (portnumber));
-            break;
-
-	    case sizeof(uint16_t):
-		    __asm__ volatile("inw %1, %0" : "=a" (result) : "Nd" (portnumber));
-		    break;
-
-	    case sizeof(uint32_t):
-		    __asm__ volatile("inl %1, %0" : "=a" (result) : "Nd" (portnumber));
-		    break;
-	}
-
-	return result;
+Port8Bit::Port8Bit(uint16_t portnumber)
+    : Port(portnumber)
+{
 }
 
-template<class port_size>
-void PortSlow<port_size>::Write(port_size data) {
-    switch(sizeof(port_size)) {
-		case sizeof(uint8_t):
-            __asm__ volatile("outb %0, %1\njmp 1f\n1: jmp 1f\n1:" : : "a" (data), "Nd" (this->portnumber));
-            break;
-	}
+Port8Bit::~Port8Bit()
+{
+}
+
+void Port8Bit::Write(uint8_t data)
+{
+    Write8(portnumber, data);
+}
+
+uint8_t Port8Bit::Read()
+{
+    return Read8(portnumber);
+}
+
+Port8BitSlow::Port8BitSlow(uint16_t portnumber)
+    : Port8Bit(portnumber)
+{
+}
+
+Port8BitSlow::~Port8BitSlow()
+{
+}
+
+void Port8BitSlow::Write(uint8_t data)
+{
+    Write8Slow(portnumber, data);
+}
+
+Port16Bit::Port16Bit(uint16_t portnumber)
+    : Port(portnumber)
+{
+}
+
+Port16Bit::~Port16Bit()
+{
+}
+
+void Port16Bit::Write(uint16_t data)
+{
+    Write16(portnumber, data);
+}
+
+uint16_t Port16Bit::Read()
+{
+    return Read16(portnumber);
+}
+
+Port32Bit::Port32Bit(uint16_t portnumber)
+    : Port(portnumber)
+{
+}
+
+Port32Bit::~Port32Bit()
+{
+}
+
+void Port32Bit::Write(uint32_t data)
+{
+    Write32(portnumber, data);
+}
+
+uint32_t Port32Bit::Read()
+{
+    return Read32(portnumber);
 }
