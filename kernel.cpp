@@ -1,3 +1,5 @@
+#include <gdt.h>
+
 void kprint(char* str)
 {
     // video memory address
@@ -62,6 +64,8 @@ extern "C" void callConstructors()
 // this is what executes in the `on boot` block
 void kmain(void* multiboot_structure)
 {
+    GlobalDescriptorTable gdt;
+    
     kprint("Hello from Cyanide!");
 
     while(true);
