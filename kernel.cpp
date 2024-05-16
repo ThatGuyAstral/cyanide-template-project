@@ -1,4 +1,5 @@
-#include <gdt.h>
+#include "types.h"
+#include "gdt.h"
 
 void kprint(char* str)
 {
