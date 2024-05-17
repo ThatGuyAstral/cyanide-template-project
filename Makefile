@@ -1,6 +1,6 @@
 
 # sudo apt-get install g++ binutils libc6-dev-i386
-# sudo apt-get install VirtualBox grub-legacy xorriso
+# sudo apt-get install grub-pc xorriso
 
 GCCPARAMS = -m32 -Iinclude -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore -Wno-write-strings
 ASPARAMS = --32
