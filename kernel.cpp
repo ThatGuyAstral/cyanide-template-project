@@ -132,13 +132,7 @@ void clear()
 {
     static uint16_t* VidMem = (uint16_t*)0xB8000;
     for(int y = 0; y < 25; y++)
-    	for(int x = 0; x < 80; x++)
-	{
-        	VidMem[80*y+x] = (VidMem[80*y+x] & 0xFF00) | ' ';
-
-		x = 0;
-            	y = 0;
-	}
+    	for(int x = 0; x < 80; x++) VidMem[80*y+x] = (VidMem[80*y+x] & 0xFF00) | ' ';
 }
 
 extern "C" void kmain(void* multiboot_structure)
@@ -146,6 +140,8 @@ extern "C" void kmain(void* multiboot_structure)
     GlobalDescriptorTable gdt;
     InterruptManager interrupts(0x20, &gdt);
     DriverManager drvmgr;
+
+    clear();
 
     kprint("[SYS] Initializing Keyboard\n");
 
